@@ -35,7 +35,10 @@ function Shell() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">AI Fax Assistant</div>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true" />
+          AI Fax Assistant
+        </div>
         {user && (
           <nav>
             <NavLink to="/" end>

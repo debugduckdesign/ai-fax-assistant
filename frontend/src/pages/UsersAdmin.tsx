@@ -134,53 +134,55 @@ export default function UsersAdmin() {
       </form>
 
       <h2>All users</h2>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Active</th>
-            <th>Created</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.id}>
-              <td>{u.username}</td>
-              <td>
-                <select
-                  value={u.role}
-                  onChange={(e) =>
-                    void changeRole(u, e.target.value as UserRole)
-                  }
-                >
-                  <option value="operator">operator</option>
-                  <option value="admin">admin</option>
-                </select>
-              </td>
-              <td>{u.is_active ? 'yes' : 'no'}</td>
-              <td className="muted">{u.created_at || '—'}</td>
-              <td className="row gap">
-                <button
-                  className="button secondary"
-                  type="button"
-                  onClick={() => void toggleActive(u)}
-                >
-                  {u.is_active ? 'Deactivate' : 'Activate'}
-                </button>
-                <button
-                  className="button secondary"
-                  type="button"
-                  onClick={() => void resetPassword(u)}
-                >
-                  Reset password
-                </button>
-              </td>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Active</th>
+              <th>Created</th>
+              <th />
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id}>
+                <td>{u.username}</td>
+                <td>
+                  <select
+                    value={u.role}
+                    onChange={(e) =>
+                      void changeRole(u, e.target.value as UserRole)
+                    }
+                  >
+                    <option value="operator">operator</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </td>
+                <td>{u.is_active ? 'yes' : 'no'}</td>
+                <td className="muted">{u.created_at || '—'}</td>
+                <td className="row gap">
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() => void toggleActive(u)}
+                  >
+                    {u.is_active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button
+                    className="button secondary"
+                    type="button"
+                    onClick={() => void resetPassword(u)}
+                  >
+                    Reset password
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   )
 }

@@ -1,7 +1,7 @@
 import logging
 
 from app.config import get_settings
-from app.models.schemas import CaseStatus
+from app.models.schemas import CaseRecord, CaseStatus
 from app.services import call_history, caller, case_store, extractor
 from app.services.case_writer import write_case_artifacts
 
@@ -50,16 +50,18 @@ async def place_call(case_id: str, placed_by_user_id: str | None = None) -> None
         CaseStatus.NEEDS_HUMAN,
         CaseStatus.COMPLETE,
         CaseStatus.CALLING,
+        CaseStatus.ERROR,
     }:
         raise RuntimeError(
             f"Case {case_id} is not ready for calling (status={record.status})"
         )
 
-    if not record.call.to and record.call_recommended:
+    if not record.call.to:
         raise RuntimeError("No phone number available to call")
 
     record.status = CaseStatus.CALLING
     record.call.status = "initiating"
+    record.error = None
     write_case_artifacts(record)
 
     try:
@@ -94,15 +96,59 @@ async def place_call(case_id: str, placed_by_user_id: str | None = None) -> None
         raise
 
 
-async def complete_call_from_conversation(conversation_id: str) -> None:
+def _retryable_status_after_call(record: CaseRecord) -> CaseStatus:
+    if record.missing_required and record.call.to:
+        return CaseStatus.AWAITING_CALL
+    if record.missing_required:
+        return CaseStatus.NEEDS_HUMAN
+    return CaseStatus.ERROR
+
+
+async def fail_call_from_conversation(
+    conversation_id: str,
+    *,
+    reason: str | None = None,
+    call_status: str = "failed",
+    transcript: str | None = None,
+) -> None:
     settings = get_settings()
     record = case_store.find_case_by_conversation_id(conversation_id, settings=settings)
     if record is None:
         raise FileNotFoundError(f"No case found for conversation_id={conversation_id}")
 
-    transcript = caller.fetch_conversation_transcript(
-        conversation_id, settings=settings
+    if record.status != CaseStatus.CALLING and record.call.status in {
+        "completed",
+        "failed",
+        "canceled",
+    }:
+        return
+
+    if transcript:
+        record.call.transcript = transcript
+    record.call.status = call_status
+    record.error = reason or "Call failed or was canceled"
+    record.status = _retryable_status_after_call(record)
+    write_case_artifacts(record)
+    call_history.update_call_by_conversation(
+        conversation_id,
+        status=call_status,
+        transcript=record.call.transcript,
+        settings=settings,
     )
+
+
+async def complete_call_from_conversation(
+    conversation_id: str, *, transcript: str | None = None
+) -> None:
+    settings = get_settings()
+    record = case_store.find_case_by_conversation_id(conversation_id, settings=settings)
+    if record is None:
+        raise FileNotFoundError(f"No case found for conversation_id={conversation_id}")
+
+    if transcript is None:
+        transcript = caller.fetch_conversation_transcript(
+            conversation_id, settings=settings
+        )
     record.call.transcript = transcript or record.call.transcript
     record.call.status = "completed"
 
@@ -128,3 +174,35 @@ async def complete_call_from_conversation(conversation_id: str) -> None:
         transcript=record.call.transcript,
         settings=settings,
     )
+
+
+async def resolve_call_from_conversation(conversation_id: str) -> str:
+    """Inspect ElevenLabs conversation and update case/call status.
+
+    Returns one of: active, completed, failed, unknown.
+    """
+    settings = get_settings()
+    outcome = caller.fetch_conversation_outcome(conversation_id, settings=settings)
+
+    if outcome.is_active:
+        return "active"
+
+    if outcome.is_unsuccessful:
+        await fail_call_from_conversation(
+            conversation_id,
+            reason=outcome.error_message,
+            call_status=outcome.call_status_label,
+            transcript=outcome.transcript or None,
+        )
+        return "failed"
+
+    if outcome.is_done:
+        await complete_call_from_conversation(
+            conversation_id, transcript=outcome.transcript or None
+        )
+        return "completed"
+
+    logger.warning(
+        "Unknown conversation status %s for %s", outcome.status, conversation_id
+    )
+    return "unknown"

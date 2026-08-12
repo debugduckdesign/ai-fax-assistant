@@ -46,38 +46,47 @@ export default function CaseList() {
       {error && <p className="error">{error}</p>}
 
       {cases.length === 0 ? (
-        <p className="muted">No cases yet. Upload a fax to begin.</p>
+        <div className="empty-state">
+          <p className="muted">No cases yet. Upload a fax to begin.</p>
+          <Link className="button" to="/upload">
+            New upload
+          </Link>
+        </div>
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Status</th>
-              <th>Scan</th>
-              <th>Missing</th>
-              <th>Call to</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cases.map((c) => (
-              <tr key={c.id}>
-                <td>
-                  <Link to={`/cases/${c.id}`}>{c.id}</Link>
-                </td>
-                <td>
-                  <span className={`chip status-${c.status}`}>
-                    {STATUS_LABEL[c.status] ?? c.status}
-                  </span>
-                </td>
-                <td>{c.scan_filename}</td>
-                <td>{c.missing_required.join(', ') || '—'}</td>
-                <td>{c.call_to || '—'}</td>
-                <td>{new Date(c.updated_at).toLocaleString()}</td>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Scan</th>
+                <th>Missing</th>
+                <th>Call to</th>
+                <th>Updated</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {cases.map((c) => (
+                <tr key={c.id}>
+                  <td>
+                    <Link to={`/cases/${c.id}`}>{c.id}</Link>
+                  </td>
+                  <td>
+                    <span className={`chip status-${c.status}`}>
+                      {STATUS_LABEL[c.status] ?? c.status}
+                    </span>
+                  </td>
+                  <td>{c.scan_filename}</td>
+                  <td>{c.missing_required.join(', ') || '—'}</td>
+                  <td>{c.call_to || '—'}</td>
+                  <td className="muted">
+                    {new Date(c.updated_at).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )

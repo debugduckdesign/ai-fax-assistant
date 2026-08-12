@@ -1,4 +1,4 @@
-# flyctl deploy --config fly.api.toml
+# API app (default). Web UI: fly deploy --config fly.web.toml
 #
 # Rename `app` if the name is taken: fly apps create <your-name>
 

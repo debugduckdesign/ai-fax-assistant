@@ -49,7 +49,17 @@ export default function Upload() {
           disabled={busy}
           onChange={(e) => void handleFile(e.target.files?.[0] ?? null)}
         />
-        {busy ? 'Uploading and starting extraction…' : 'Drop fax here or click to browse'}
+        <span className="dropzone-icon" aria-hidden="true">
+          ↑
+        </span>
+        {busy ? (
+          <span className="dropzone-title">Uploading and starting extraction…</span>
+        ) : (
+          <>
+            <span className="dropzone-title">Drop fax here or click to browse</span>
+            <span className="dropzone-hint">PDF, PNG, JPEG, WebP, or GIF</span>
+          </>
+        )}
       </label>
 
       {error && <p className="error">{error}</p>}

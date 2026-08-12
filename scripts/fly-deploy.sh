@@ -21,7 +21,7 @@ $FLY apps create "$API_APP" --org personal 2>/dev/null || true
 $FLY apps create "$WEB_APP" --org personal 2>/dev/null || true
 
 if [[ "$API_APP" != "ai-fax-assistant-api" || "$WEB_APP" != "ai-fax-assistant-web" ]]; then
-  echo "Using custom app names — update fly.api.toml / fly.web.toml app + API_UPSTREAM to match."
+  echo "Using custom app names — update fly.toml / fly.web.toml app + API_UPSTREAM to match."
 fi
 
 echo "==> Creating volume fax_data on $API_APP (no-op if exists)"
@@ -44,7 +44,7 @@ echo "      WEBHOOK_BASE_URL=https://${WEB_APP}.fly.dev \\"
 echo "      CORS_ORIGINS='[\"https://${WEB_APP}.fly.dev\"]'"
 
 echo "==> Deploying API"
-$FLY deploy --config fly.api.toml --remote-only
+$FLY deploy --config fly.toml --remote-only
 
 echo "==> Deploying web"
 $FLY deploy --config fly.web.toml --remote-only

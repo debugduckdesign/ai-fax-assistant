@@ -121,6 +121,7 @@ async def start_call(
         CaseStatus.AWAITING_CALL,
         CaseStatus.NEEDS_HUMAN,
         CaseStatus.COMPLETE,
+        CaseStatus.ERROR,
     }:
         raise HTTPException(
             status_code=400,
@@ -150,8 +151,12 @@ async def start_call(
 async def _poll_conversation(
     case_id: str, attempts: int = 40, delay: float = 15.0
 ) -> None:
-    from app.services.pipeline import complete_call_from_conversation
+    from app.services.pipeline import (
+        fail_call_from_conversation,
+        resolve_call_from_conversation,
+    )
 
+    conversation_id: str | None = None
     for _ in range(attempts):
         await asyncio.sleep(delay)
         try:
@@ -160,12 +165,35 @@ async def _poll_conversation(
             return
         if record.status != CaseStatus.CALLING:
             return
-        if not record.call.conversation_id:
+        conversation_id = record.call.conversation_id
+        if not conversation_id:
             return
         try:
-            await complete_call_from_conversation(record.call.conversation_id)
-            updated = case_store.load_case(case_id)
-            if updated.status != CaseStatus.CALLING:
+            result = await resolve_call_from_conversation(conversation_id)
+            if result in {"completed", "failed"}:
                 return
         except Exception:
             logger.exception("Poll merge failed for case %s", case_id)
+
+    try:
+        record = case_store.load_case(case_id)
+    except FileNotFoundError:
+        return
+    if record.status != CaseStatus.CALLING:
+        return
+    conversation_id = conversation_id or record.call.conversation_id
+    if not conversation_id:
+        return
+    logger.warning(
+        "Call poll timed out for case %s conversation %s; marking failed",
+        case_id,
+        conversation_id,
+    )
+    try:
+        await fail_call_from_conversation(
+            conversation_id,
+            reason="Call timed out waiting for completion",
+            call_status="failed",
+        )
+    except Exception:
+        logger.exception("Failed to mark timed-out call for case %s", case_id)

@@ -41,7 +41,7 @@ set +a
 WEBHOOK_BASE_URL="${WEBHOOK_BASE_URL_OVERRIDE:-https://${WEB_APP}.fly.dev}"
 CORS_ORIGINS="${CORS_ORIGINS_OVERRIDE:-[\"https://${WEB_APP}.fly.dev\"]}"
 SESSION_SECRET="${SESSION_SECRET:-$(openssl rand -hex 32)}"
-ANTHROPIC_MODEL="${ANTHROPIC_MODEL:-claude-sonnet-4-20250514}"
+ANTHROPIC_MODEL="${ANTHROPIC_MODEL:-claude-sonnet-4-6}"
 
 # Prefer an explicit Fly Redis URL; refuse localhost from local .env.
 if [[ -n "${FLY_REDIS_URL:-}" ]]; then

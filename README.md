@@ -52,7 +52,7 @@ Open http://localhost:5173 — Vite proxies `/api` to the backend. Redis must be
 | Variable | Purpose |
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Claude vision extraction |
-| `ANTHROPIC_MODEL` | Defaults to `claude-sonnet-4-20250514` |
+| `ANTHROPIC_MODEL` | Defaults to `claude-sonnet-4-6` |
 | `ELEVENLABS_API_KEY` | Outbound Conversational AI calls |
 | `ELEVENLABS_AGENT_ID` | Agent configured in ElevenLabs |
 | `ELEVENLABS_AGENT_PHONE_NUMBER_ID` | Phone number ID from ElevenLabs dashboard |
@@ -126,7 +126,7 @@ curl -L https://fly.io/install.sh | sh
 fly auth login
 ```
 
-2. Create apps + volume (skip if names are taken — edit `app` in `fly.api.toml` / `fly.web.toml` and `API_UPSTREAM` in `fly.web.toml`):
+2. Create apps + volume (skip if names are taken — edit `app` in `fly.toml` / `fly.web.toml` and `API_UPSTREAM` in `fly.web.toml`):
 
 ```bash
 fly apps create ai-fax-assistant-api
@@ -161,7 +161,7 @@ fly secrets set --app ai-fax-assistant-api \
 5. Deploy once manually (or via CI after the token below is set):
 
 ```bash
-fly deploy --config fly.api.toml
+fly deploy --config fly.toml
 fly deploy --config fly.web.toml
 # or: ./scripts/fly-deploy.sh
 ```

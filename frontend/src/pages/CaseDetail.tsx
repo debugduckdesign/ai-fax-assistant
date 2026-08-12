@@ -88,7 +88,7 @@ export default function CaseDetail() {
 
   const canCall =
     Boolean(record.call.to) &&
-    ['awaiting_call', 'needs_human', 'complete'].includes(record.status)
+    ['awaiting_call', 'needs_human', 'complete', 'error'].includes(record.status)
 
   const isImage = (record.scan_content_type || '').startsWith('image/') ||
     /\.(png|jpe?g|webp|gif)$/i.test(record.scan_filename)
@@ -97,7 +97,7 @@ export default function CaseDetail() {
     <section className="panel">
       <div className="row between">
         <div>
-          <Link to="/" className="muted">
+          <Link to="/" className="back-link">
             ← Cases
           </Link>
           <h1>Case {record.id}</h1>
@@ -132,26 +132,28 @@ export default function CaseDetail() {
 
         <div>
           <h2>Extracted fields</h2>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Field</th>
-                <th>Value</th>
-                <th>Confidence</th>
-                <th>Source</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(record.fields).map(([name, field]) => (
-                <tr key={name}>
-                  <td>{name}</td>
-                  <td>{field.value || '—'}</td>
-                  <td>{field.confidence.toFixed(2)}</td>
-                  <td>{field.source}</td>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Value</th>
+                  <th>Confidence</th>
+                  <th>Source</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Object.entries(record.fields).map(([name, field]) => (
+                  <tr key={name}>
+                    <td>{name}</td>
+                    <td>{field.value || '—'}</td>
+                    <td>{field.confidence.toFixed(2)}</td>
+                    <td>{field.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <h2>Missing required</h2>
           <p>{record.missing_required.join(', ') || 'None'}</p>

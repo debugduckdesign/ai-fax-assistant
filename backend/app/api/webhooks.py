@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, Request
 
 from app.config import get_settings
 from app.security import verify_elevenlabs_webhook
-from app.services.pipeline import complete_call_from_conversation
+from app.services.pipeline import resolve_call_from_conversation
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
@@ -27,7 +27,7 @@ def _extract_conversation_id(payload: dict[str, Any]) -> str | None:
     return None
 
 
-def _is_completion_event(payload: dict[str, Any]) -> bool:
+def _is_terminal_event(payload: dict[str, Any]) -> bool:
     event = (
         payload.get("type") or payload.get("event") or payload.get("event_type") or ""
     )
@@ -41,6 +41,11 @@ def _is_completion_event(payload: dict[str, Any]) -> bool:
         "call_ended",
         "completed",
         "done",
+        "failed",
+        "failure",
+        "canceled",
+        "cancelled",
+        "error",
     )
     return any(m in event for m in markers)
 
@@ -68,10 +73,10 @@ async def elevenlabs_webhook(
         conversation_id or "missing",
     )
 
-    if not _is_completion_event(payload):
+    if not _is_terminal_event(payload):
         return {"status": "ignored"}
     if not conversation_id:
         return {"status": "missing_conversation_id"}
 
-    background_tasks.add_task(complete_call_from_conversation, conversation_id)
+    background_tasks.add_task(resolve_call_from_conversation, conversation_id)
     return {"status": "accepted", "conversation_id": conversation_id}

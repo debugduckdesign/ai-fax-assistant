@@ -33,34 +33,36 @@ export default function Login() {
   }
 
   return (
-    <section className="panel login-panel">
-      <h1>Sign in</h1>
-      <p className="muted">Use your AI Fax Assistant account.</p>
-      <form className="login-form" onSubmit={(e) => void onSubmit(e)}>
-        <label>
-          Username
-          <input
-            autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        {error && <p className="error">{error}</p>}
-        <button className="button" type="submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-    </section>
+    <div className="login-shell">
+      <section className="panel login-panel">
+        <h1>Sign in</h1>
+        <p className="muted">Access your fax intake workspace.</p>
+        <form className="login-form" onSubmit={(e) => void onSubmit(e)}>
+          <label>
+            Username
+            <input
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
+          {error && <p className="error">{error}</p>}
+          <button className="button" type="submit" disabled={busy}>
+            {busy ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+      </section>
+    </div>
   )
 }
