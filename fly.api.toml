@@ -11,7 +11,7 @@ primary_region = "iad"
 [env]
   DATA_DIR = "/data"
   DATABASE_PATH = "/data/app.db"
-  REQUIREMENTS_PATH = "/data/requirements.md"
+  REQUIREMENTS_PATH = "/app/templates/requirements.md"
   SESSION_COOKIE_SECURE = "true"
   ALLOW_INSECURE_WEBHOOKS = "false"
   PORT = "8000"

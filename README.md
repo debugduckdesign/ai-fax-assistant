@@ -158,13 +158,21 @@ fly secrets set --app ai-fax-assistant-api \
   CORS_ORIGINS='["https://ai-fax-assistant-web.fly.dev"]'
 ```
 
-5. Deploy:
+5. Deploy once manually (or via CI after the token below is set):
 
 ```bash
 fly deploy --config fly.api.toml
 fly deploy --config fly.web.toml
 # or: ./scripts/fly-deploy.sh
 ```
+
+6. GitHub Actions deploy on `main` — add repository secret `FLY_API_TOKEN` (must cover **both** apps):
+
+```bash
+fly tokens create deploy -x 999999h
+```
+
+Then **Settings → Secrets and variables → Actions → New repository secret** named `FLY_API_TOKEN`.
 
 - UI: `https://ai-fax-assistant-web.fly.dev`
 - Health: `https://ai-fax-assistant-api.fly.dev/api/health`
@@ -190,45 +198,7 @@ Workflow: [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
 | Trigger | Jobs |
 | --- | --- |
-| Pull request | Backend ruff + black, frontend oxlint + build, Docker image builds |
-| Push to `main` | Same checks, then deploy to Fly.io |
+| Pull request / any push | Backend ruff + black, frontend oxlint + build, Docker image builds |
+| Push to `main` | Same checks, then `fly deploy` for API + web |
 
-### One-time Fly.io setup
-
-1. Install [`flyctl`](https://fly.io/docs/flyctl/install/) and log in: `fly auth login`
-2. Create the app (change the name in `fly.toml` if taken):
-
-```bash
-fly apps create ai-fax-assistant
-fly volumes create fax_data --region ams --size 1 -a ai-fax-assistant
-```
-
-3. Set secrets (at least these):
-
-```bash
-fly secrets set \
-  ANTHROPIC_API_KEY=... \
-  ELEVENLABS_API_KEY=... \
-  ELEVENLABS_AGENT_ID=... \
-  ELEVENLABS_AGENT_PHONE_NUMBER_ID=... \
-  ELEVENLABS_WEBHOOK_SECRET=... \
-  ADMIN_PASSWORD='a-strong-password' \
-  SESSION_SECRET="$(openssl rand -hex 32)" \
-  WEBHOOK_BASE_URL=https://ai-fax-assistant.fly.dev \
-  CORS_ORIGINS='["https://ai-fax-assistant.fly.dev"]' \
-  -a ai-fax-assistant
-```
-
-4. In the GitHub repo: **Settings → Secrets and variables → Actions**, add repository secret `FLY_API_TOKEN` from:
-
-```bash
-fly tokens create deploy -x 999999h -a ai-fax-assistant
-```
-
-5. Push to `main` (or run the **CI** workflow manually). Deploy runs only after lint/build succeed on `main`.
-
-Local smoke-build of the production image:
-
-```bash
-docker build -t ai-fax-assistant .
-```
+Deploy needs `FLY_API_TOKEN` (see Fly setup above) and apps/volume/Redis already created.
