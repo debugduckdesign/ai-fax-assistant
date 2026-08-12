@@ -1,0 +1,42 @@
+# flyctl deploy --config fly.api.toml
+#
+# Rename `app` if the name is taken: fly apps create <your-name>
+
+app = "ai-fax-assistant-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.backend"
+
+[env]
+  DATA_DIR = "/data"
+  DATABASE_PATH = "/data/app.db"
+  REQUIREMENTS_PATH = "/data/requirements.md"
+  SESSION_COOKIE_SECURE = "true"
+  ALLOW_INSECURE_WEBHOOKS = "false"
+  PORT = "8000"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/health"
+
+[[mounts]]
+  source = "fax_data"
+  destination = "/data"
+  initial_size = "1gb"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

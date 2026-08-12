@@ -1,0 +1,36 @@
+[project]
+name = "ai-fax-assistant"
+version = "0.1.0"
+description = "AI fax intake assistant with Claude vision and ElevenLabs calling"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",
+    "pydantic-settings>=2.6.0",
+    "anthropic>=0.40.0",
+    "elevenlabs>=1.50.0",
+    "pymupdf>=1.24.0",
+    "httpx>=0.27.0",
+    "aiofiles>=24.1.0",
+    "redis>=5.2.0",
+    "bcrypt>=4.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=24.10.0",
+    "ruff>=0.8.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
