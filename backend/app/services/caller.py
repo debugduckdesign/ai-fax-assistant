@@ -119,30 +119,13 @@ def start_outbound_call(
         raise RuntimeError("No call_to phone number available for this case")
 
     client = _client(settings)
-    dynamic_vars = build_call_context(record)
-
+    # Overrides need agent Security permissions; we only pass dynamic variables.
     response = client.conversational_ai.twilio.outbound_call(
         agent_id=settings.elevenlabs_agent_id,
         agent_phone_number_id=settings.elevenlabs_agent_phone_number_id,
         to_number=to_number,
         conversation_initiation_client_data={
-            "dynamic_variables": dynamic_vars,
-            "conversation_config_override": {
-                "agent": {
-                    "first_message": (
-                        "Hello, this is the clinic fax assistant. "
-                        "I'm calling about a fax we received and need a few details."
-                    ),
-                    "prompt": {
-                        "prompt": (
-                            "You are a polite clinic fax intake assistant. "
-                            "Collect only these missing fields: {{missing_fields}}. "
-                            "Known facts: {{known_facts}}. "
-                            "Confirm spelling for names and IDs. Be brief."
-                        )
-                    },
-                }
-            },
+            "dynamic_variables": build_call_context(record),
         },
     )
 
