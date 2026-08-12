@@ -66,25 +66,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build API image
+      - name: Build Fly production image
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.backend
+          file: Dockerfile
           push: false
-          tags: ai-fax-assistant-api:ci
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,mode=max,scope=api
+          tags: ai-fax-assistant:ci
+          cache-from: type=gha,scope=fly
+          cache-to: type=gha,mode=max,scope=fly
 
-      - name: Build web image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.frontend
-          push: false
-          tags: ai-fax-assistant-web:ci
-          cache-from: type=gha,scope=web
-          cache-to: type=gha,mode=max,scope=web
+      - name: Build local compose images
+        run: |
+          docker build -f Dockerfile.backend -t ai-fax-assistant-api:ci .
+          docker build -f Dockerfile.frontend -t ai-fax-assistant-web:ci .
 
   deploy:
     name: Deploy to Fly.io
@@ -99,12 +94,7 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Deploy API
+      - name: Deploy
         run: flyctl deploy --config fly.toml --remote-only --ha=false
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: Deploy web
-        run: flyctl deploy --config fly.web.toml --remote-only --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

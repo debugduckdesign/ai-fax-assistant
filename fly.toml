@@ -1,12 +1,14 @@
-# API app (default). Web UI: fly deploy --config fly.web.toml
+# Single Fly app: UI + API (+ local Redis fallback). Volume region must match primary_region.
+#   fly apps create ai-fax-assistant
+#   fly volumes create fax_data --region ams --size 1 -a ai-fax-assistant
 #
-# Rename `app` if the name is taken: fly apps create <your-name>
+# Optional split deploy (compose-style): fly.web.toml + Dockerfile.backend — not used by default.
 
-app = "ai-fax-assistant-api"
-primary_region = "iad"
+app = "ai-fax-assistant"
+primary_region = "ams"
 
 [build]
-  dockerfile = "Dockerfile.backend"
+  dockerfile = "Dockerfile"
 
 [env]
   DATA_DIR = "/data"
@@ -14,12 +16,13 @@ primary_region = "iad"
   REQUIREMENTS_PATH = "/app/templates/requirements.md"
   SESSION_COOKIE_SECURE = "true"
   ALLOW_INSECURE_WEBHOOKS = "false"
-  PORT = "8000"
+  # Overridden when REDIS_URL secret points at Upstash; otherwise start.sh runs local Redis.
+  REDIS_URL = "redis://127.0.0.1:6379/0"
 
 [http_service]
-  internal_port = 8000
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = "off"
   auto_start_machines = true
   min_machines_running = 1
   processes = ["app"]
@@ -27,7 +30,7 @@ primary_region = "iad"
   [[http_service.checks]]
     interval = "15s"
     timeout = "5s"
-    grace_period = "20s"
+    grace_period = "60s"
     method = "GET"
     path = "/api/health"
 

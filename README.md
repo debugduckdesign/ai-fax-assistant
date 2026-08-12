@@ -117,7 +117,7 @@ If the webhook is unavailable, the backend also polls the conversation for a tra
 
 ## Deploy on Fly.io
 
-Two apps: **API** (FastAPI + SQLite volume) and **web** (nginx UI proxying `/api` over Fly private networking). Sessions need Redis (Upstash via `fly redis`).
+One app: nginx UI + FastAPI + SQLite volume (local Redis in the VM, or set `REDIS_URL` to Upstash). Local Docker Compose still uses separate `api` / `web` / `redis` images.
 
 1. Install CLI and log in:
 
@@ -126,26 +126,17 @@ curl -L https://fly.io/install.sh | sh
 fly auth login
 ```
 
-2. Create apps + volume (skip if names are taken — edit `app` in `fly.toml` / `fly.web.toml` and `API_UPSTREAM` in `fly.web.toml`):
+2. Create app + volume (region must match `primary_region` in `fly.toml`, currently `ams`):
 
 ```bash
-fly apps create ai-fax-assistant-api
-fly apps create ai-fax-assistant-web
-fly volumes create fax_data --app ai-fax-assistant-api --region iad --size 1
+fly apps create ai-fax-assistant
+fly volumes create fax_data --app ai-fax-assistant --region ams --size 1
 ```
 
-3. Redis (free Upstash tier via Fly):
+3. App secrets (use strong values; never commit `.env`):
 
 ```bash
-fly redis create --name ai-fax-assistant-redis --region iad
-# copy the private Redis URL, then:
-fly secrets set REDIS_URL='redis://...' --app ai-fax-assistant-api
-```
-
-4. App secrets (use strong values; never commit `.env`):
-
-```bash
-fly secrets set --app ai-fax-assistant-api \
+fly secrets set --app ai-fax-assistant \
   ANTHROPIC_API_KEY=... \
   ELEVENLABS_API_KEY=... \
   ELEVENLABS_AGENT_ID=... \
@@ -154,19 +145,25 @@ fly secrets set --app ai-fax-assistant-api \
   SESSION_SECRET="$(openssl rand -hex 32)" \
   ADMIN_USERNAME=admin \
   ADMIN_PASSWORD='...' \
-  WEBHOOK_BASE_URL=https://ai-fax-assistant-web.fly.dev \
-  CORS_ORIGINS='["https://ai-fax-assistant-web.fly.dev"]'
+  WEBHOOK_BASE_URL=https://ai-fax-assistant.fly.dev \
+  CORS_ORIGINS='["https://ai-fax-assistant.fly.dev"]'
 ```
 
-5. Deploy once manually (or via CI after the token below is set):
+Optional Redis (otherwise the image runs Redis on localhost):
+
+```bash
+fly redis create --name ai-fax-assistant-redis --region ams
+fly secrets set REDIS_URL='redis://...' --app ai-fax-assistant
+```
+
+4. Deploy:
 
 ```bash
 fly deploy --config fly.toml
-fly deploy --config fly.web.toml
 # or: ./scripts/fly-deploy.sh
 ```
 
-6. GitHub Actions deploy on `main` — add repository secret `FLY_API_TOKEN` (must cover **both** apps):
+5. GitHub Actions deploy on `main` — add repository secret `FLY_API_TOKEN`:
 
 ```bash
 fly tokens create deploy -x 999999h
@@ -174,11 +171,11 @@ fly tokens create deploy -x 999999h
 
 Then **Settings → Secrets and variables → Actions → New repository secret** named `FLY_API_TOKEN`.
 
-- UI: `https://ai-fax-assistant-web.fly.dev`
-- Health: `https://ai-fax-assistant-api.fly.dev/api/health`
-- ElevenLabs webhook: `https://ai-fax-assistant-web.fly.dev/api/webhooks/elevenlabs`
+- UI: `https://ai-fax-assistant.fly.dev`
+- Health: `https://ai-fax-assistant.fly.dev/api/health`
+- ElevenLabs webhook: `https://ai-fax-assistant.fly.dev/api/webhooks/elevenlabs`
 
-Free allowance is limited (shared VMs + volume). Machines may auto-stop; API `min_machines_running` is `1` so webhooks/sessions stay warm. Anthropic/ElevenLabs usage is billed separately.
+Fly **trial** machines are stopped after ~5 minutes unless a payment method is on file — that causes cold-start 502s. `min_machines_running` is `1` and `auto_stop_machines` is off for paid/allowance accounts. Anthropic/ElevenLabs usage is billed separately.
 
 ## Formatting / lint
 
