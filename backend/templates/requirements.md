@@ -14,6 +14,7 @@
 - Only call when at least one required field above is missing or low-confidence
 
 ## Call script goals
-- Identify yourself as the clinic fax assistant
-- Ask only for missing/low-confidence fields
+- Introduce as fax intake for the referring physician's office or clinic from the fax
+- State why you called: incomplete fax / missing required details (you placed the outbound call)
+- Ask only for missing/low-confidence fields, one at a time
 - Confirm spelling of names and IDs

@@ -77,10 +77,8 @@ Open http://localhost:5173 — Vite proxies `/api` to the backend. Redis must be
 2. Import a Twilio number (or SIP trunk / verified caller ID) under **Phone Numbers**.
 3. Link that number to your agent.
 4. Copy `agent_id` and the phone number’s `agent_phone_number_id` into `.env`.
-5. On the agent, set **First message** and **System prompt** in the dashboard (runtime overrides are off by default and will fail the call). Use dynamic variables: `{{missing_fields}}`, `{{known_facts}}`, `{{patient_name}}`, `{{call_reason}}`, `{{case_id}}`.
-6. Example first message: `Hello, this is the clinic fax assistant calling about {{patient_name}}. I need a few details from a fax we received.`
-7. Example prompt snippet: `Collect only these missing fields: {{missing_fields}}. Known facts: {{known_facts}}. Confirm spelling for names and IDs. Be brief.`
-8. For local webhooks, expose the API with ngrok and point ElevenLabs post-call webhook to:
+5. The API enables first-message/prompt overrides on the agent and sends a case-specific script (doctor/clinic identity, why we’re calling, missing items to ask). Optional dashboard defaults can still use `{{missing_fields}}`, `{{missing_questions}}`, `{{caller_identity}}`, `{{patient_name}}`, `{{call_reason}}`, `{{case_id}}`.
+6. For local webhooks, expose the API with ngrok and point ElevenLabs post-call webhook to:
    `{WEBHOOK_BASE_URL}/api/webhooks/elevenlabs`
 
 If the webhook is unavailable, the backend also polls the conversation for a transcript after a call is placed.
